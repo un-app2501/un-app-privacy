@@ -156,7 +156,7 @@
     </div>
     
     <div class="section">
-        <h2>🔗 Services Connected</h2>
+        <h2>👆 Card Taps (Contextual + Prediction)</h2>
         <div id="servicesBreakdown">
             <div class="loading">Loading...</div>
         </div>
@@ -201,6 +201,7 @@
             const iosAppOpens = iosEvents.filter(e => e.event_type === 'app_started').length;
             const iosQueries = iosEvents.filter(e => e.event_type === 'query_submitted').length;
             const iosConnections = iosEvents.filter(e => e.event_type === 'service_connected').length;
+            const iosCardTaps = iosEvents.filter(e => e.event_type === 'context_card_tap').length;
             
             // Today's stats
             const today = new Date().toDateString();
@@ -222,8 +223,8 @@
                     <div class="stat-label">Queries</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${iosConnections}</div>
-                    <div class="stat-label">Connections</div>
+                    <div class="stat-value">${iosCardTaps}</div>
+                    <div class="stat-label">Card Taps</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${todayUsers}</div>
@@ -242,9 +243,11 @@
                 const q = e.event_data?.query || 'unknown';
                 // Categorize
                 let category = 'other';
-                if (/sensex|nifty|stock|market|share/i.test(q)) category = 'stocks';
-                else if (/hungry|food|swiggy|zomato|eat|order|pizza|biryani/i.test(q)) category = 'food';
+                if (/sensex|nifty|stock|market|share|nasdaq|dow|s&p|us market/i.test(q)) category = 'stocks';
+                else if (/hungry|food|swiggy|zomato|eat|order|pizza|biryani|lunch|dinner|breakfast/i.test(q)) category = 'food';
                 else if (/meeting|calendar|schedule|event/i.test(q)) category = 'calendar';
+                else if (/cab|ride|uber|ola|auto|namma|yatri|rapido|book a ride/i.test(q)) category = 'cab';
+                else if (/cricket|score|ipl|match/i.test(q)) category = 'cricket';
                 
                 queryCounts[category] = (queryCounts[category] || 0) + 1;
             });
@@ -262,26 +265,26 @@
                     </div>
                 `).join('') || '<p style="color:#888">No queries yet</p>';
             
-            // Services breakdown
-            const serviceEvents = iosEvents.filter(e => e.event_type === 'service_connected');
-            const serviceCounts = {};
-            serviceEvents.forEach(e => {
-                const s = e.event_data?.service || 'unknown';
-                serviceCounts[s] = (serviceCounts[s] || 0) + 1;
+            // Card taps breakdown
+            const cardTapEvents = iosEvents.filter(e => e.event_type === 'context_card_tap');
+            const cardTapCounts = {};
+            cardTapEvents.forEach(e => {
+                const cat = e.event_data?.category || e.event_data?.card_id || 'unknown';
+                cardTapCounts[cat] = (cardTapCounts[cat] || 0) + 1;
             });
             
-            const totalServices = Object.values(serviceCounts).reduce((a, b) => a + b, 0) || 1;
-            document.getElementById('servicesBreakdown').innerHTML = Object.entries(serviceCounts)
+            const totalCardTaps = Object.values(cardTapCounts).reduce((a, b) => a + b, 0) || 1;
+            document.getElementById('servicesBreakdown').innerHTML = Object.entries(cardTapCounts)
                 .sort((a, b) => b[1] - a[1])
-                .map(([svc, count]) => `
+                .map(([cat, count]) => `
                     <div class="breakdown-row">
-                        <span class="breakdown-label">${svc}</span>
+                        <span class="breakdown-label">${cat}</span>
                         <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: ${(count/totalServices)*100}%"></div>
+                            <div class="breakdown-fill" style="width: ${(count/totalCardTaps)*100}%"></div>
                         </div>
                         <span class="breakdown-count">${count}</span>
                     </div>
-                `).join('') || '<p style="color:#888">No connections yet</p>';
+                `).join('') || '<p style="color:#888">No card taps yet</p>';
             
             // Recent events
             const recentIOS = iosEvents.slice(0, 20);
